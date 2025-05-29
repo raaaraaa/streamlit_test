@@ -4,12 +4,12 @@ import pandas as pd
 
 st.title("🌍 Currency and Weather Dashboard")
 
-# --- Text input ---
+# --- Custom Message Input ---
 widgetuser_input = st.text_input('Enter a custom message:', 'Hello, Streamlit!')
 st.write('Customized Message:', widgetuser_input)
 
-# --- Currency Section ---
-currency_options = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY", "SGD", "INR"]
+# --- Currency Exchange Section ---
+currency_options = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY", "SGD", "INR", "MYR"]
 selected_currency = st.selectbox('Select base currency:', currency_options)
 
 if st.button("Get Exchange Rates"):
@@ -24,7 +24,7 @@ if st.button("Get Exchange Rates"):
 # --- Weather Section ---
 st.header("🌤 Weather Forecast by Country")
 
-# Predefined country-to-city-coordinates mapping
+# Country -> City + Coordinates
 country_coords = {
     "Philippines": {"city": "Manila", "lat": 14.6, "lon": 120.98},
     "United States": {"city": "New York", "lat": 40.71, "lon": -74.01},
@@ -36,17 +36,18 @@ country_coords = {
     "China": {"city": "Beijing", "lat": 39.91, "lon": 116.40},
     "Germany": {"city": "Berlin", "lat": 52.52, "lon": 13.40},
     "Brazil": {"city": "São Paulo", "lat": -23.55, "lon": -46.63},
+    "Malaysia": {"city": "Kuala Lumpur", "lat": 3.14, "lon": 101.69},  # ✅ Added Malaysia
 }
 
-# Dropdown to choose country
+# Country Dropdown
 selected_country = st.selectbox("Select a country:", list(country_coords.keys()))
 selected_location = country_coords[selected_country]
 
-# Show selected info
+# Show selected city and coordinates
 st.write(f"City: {selected_location['city']}")
 st.write(f"Coordinates: {selected_location['lat']}, {selected_location['lon']}")
 
-# Call Open-Meteo for weather
+# Weather API Call
 weather_url = (
     f"https://api.open-meteo.com/v1/forecast?"
     f"latitude={selected_location['lat']}&longitude={selected_location['lon']}"
@@ -65,7 +66,7 @@ if weather_response.status_code == 200:
     st.write(f"Temperature: {current.get('temperature')}°C")
     st.write(f"Windspeed: {current.get('windspeed')} km/h")
 
-    # Hourly forecast chart
+    # Hourly data
     hourly = weather_data["hourly"]
     df_weather = pd.DataFrame({
         "Time": pd.to_datetime(hourly["time"]),
