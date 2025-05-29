@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # Set the app title 
-st.title('Blupp Blupp raraaa !!') 
+st.title('Blupp Blupp anyeong raraaa !!') 
 
 # Add a welcome message 
 st.write('Welcome to my Streamlit app!') 
