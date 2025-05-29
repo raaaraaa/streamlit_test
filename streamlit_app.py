@@ -2,22 +2,18 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# Title and welcome
-st.title('Blupp Blupp anyeong raraaa !!')
-st.write('Welcome to my Streamlit app!')
+st.title("🌍 Currency and Weather Dashboard")
 
-# Text input
+# --- Text input ---
 widgetuser_input = st.text_input('Enter a custom message:', 'Hello, Streamlit!')
 st.write('Customized Message:', widgetuser_input)
 
-# Dropdown to select base currency
+# --- Currency Section ---
 currency_options = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY", "SGD", "INR"]
 selected_currency = st.selectbox('Select base currency:', currency_options)
 
-# Currency API call
 if st.button("Get Exchange Rates"):
     response = requests.get(f'https://api.vatcomply.com/rates?base={selected_currency}')
-    
     if response.status_code == 200:
         data = response.json()
         st.write(f'Exchange rates for {selected_currency}:')
@@ -25,38 +21,60 @@ if st.button("Get Exchange Rates"):
     else:
         st.error(f"API call failed with status code: {response.status_code}")
 
-# --- Simulated Weather Data ---
-weather_data = {
-    "current": {
-        "time": "2022-01-01T15:00",
-        "temperature_2m": 2.4,
-        "wind_speed_10m": 11.9,
-    },
-    "hourly": {
-        "time": [
-            "2022-07-01T00:00", "2022-07-01T01:00", "2022-07-01T02:00",
-            "2022-07-01T03:00", "2022-07-01T04:00", "2022-07-01T05:00"
-        ],
-        "wind_speed_10m": [3.16, 3.02, 3.3, 3.14, 3.2, 2.95],
-        "temperature_2m": [13.7, 13.3, 12.8, 12.3, 11.8, 11.2],
-        "relative_humidity_2m": [82, 83, 86, 85, 88, 88],
-    }
+# --- Weather Section ---
+st.header("🌤 Weather Forecast by Country")
+
+# Predefined country-to-city-coordinates mapping
+country_coords = {
+    "Philippines": {"city": "Manila", "lat": 14.6, "lon": 120.98},
+    "United States": {"city": "New York", "lat": 40.71, "lon": -74.01},
+    "Japan": {"city": "Tokyo", "lat": 35.68, "lon": 139.69},
+    "United Kingdom": {"city": "London", "lat": 51.51, "lon": -0.13},
+    "Australia": {"city": "Sydney", "lat": -33.87, "lon": 151.21},
+    "India": {"city": "New Delhi", "lat": 28.61, "lon": 77.21},
+    "Canada": {"city": "Toronto", "lat": 43.65, "lon": -79.38},
+    "China": {"city": "Beijing", "lat": 39.91, "lon": 116.40},
+    "Germany": {"city": "Berlin", "lat": 52.52, "lon": 13.40},
+    "Brazil": {"city": "São Paulo", "lat": -23.55, "lon": -46.63},
 }
 
-st.subheader("🌤 Current Weather")
-st.write(f"Time: {weather_data['current']['time']}")
-st.write(f"Temperature: {weather_data['current']['temperature_2m']}°C")
-st.write(f"Wind Speed: {weather_data['current']['wind_speed_10m']} km/h")
+# Dropdown to choose country
+selected_country = st.selectbox("Select a country:", list(country_coords.keys()))
+selected_location = country_coords[selected_country]
 
-# Convert hourly data to DataFrame
-hourly = weather_data["hourly"]
-df_weather = pd.DataFrame({
-    "Time": pd.to_datetime(hourly["time"]),
-    "Temperature (°C)": hourly["temperature_2m"],
-    "Wind Speed (km/h)": hourly["wind_speed_10m"],
-    "Humidity (%)": hourly["relative_humidity_2m"]
-})
+# Show selected info
+st.write(f"City: {selected_location['city']}")
+st.write(f"Coordinates: {selected_location['lat']}, {selected_location['lon']}")
 
-# Display line chart
-st.subheader("📊 Hourly Weather Trends")
-st.line_chart(df_weather.set_index("Time"))
+# Call Open-Meteo for weather
+weather_url = (
+    f"https://api.open-meteo.com/v1/forecast?"
+    f"latitude={selected_location['lat']}&longitude={selected_location['lon']}"
+    f"&hourly=temperature_2m,wind_speed_10m,relative_humidity_2m"
+    f"&current_weather=true"
+)
+
+weather_response = requests.get(weather_url)
+
+if weather_response.status_code == 200:
+    weather_data = weather_response.json()
+
+    # Current weather
+    current = weather_data.get("current_weather", {})
+    st.subheader("Current Weather")
+    st.write(f"Temperature: {current.get('temperature')}°C")
+    st.write(f"Windspeed: {current.get('windspeed')} km/h")
+
+    # Hourly forecast chart
+    hourly = weather_data["hourly"]
+    df_weather = pd.DataFrame({
+        "Time": pd.to_datetime(hourly["time"]),
+        "Temperature (°C)": hourly["temperature_2m"],
+        "Wind Speed (km/h)": hourly["wind_speed_10m"],
+        "Humidity (%)": hourly["relative_humidity_2m"]
+    })
+
+    st.subheader("Hourly Weather Trends")
+    st.line_chart(df_weather.set_index("Time"))
+else:
+    st.error("Failed to fetch weather data.")
